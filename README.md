@@ -9,15 +9,153 @@
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+```go get github.com/yunboom/generate```
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+1. 读取限速
+```go
+const (
+	rateLimit = 1 << 20 //限速1m/s
+	src       = "/Users/zonst/Downloads/1.zip"
+	dst       = "/Users/zonst/Downloads/2.zip"
+)
+
+var (
+	readFile, writeFile *os.File
+	err                 error
+)
+
+func init() {
+	readFile, err = os.Open(src)
+	if err != nil {
+		panic(err)
+	}
+	writeFile, err = os.OpenFile(dst, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestReadLimit(t *testing.T) {
+	//限制读取速度
+	now := time.Now()
+	reader := NewStorage(rateLimit).Reader(readFile)
+	if _, err = ioutil.ReadAll(reader); err != nil {
+		t.Fatal(err)
+	}
+	fmt.Printf("拷贝耗时:%v, 文件大小:%d", time.Since(now), reader.Size())
+}
+```
+2. 限制写入速度
+```go
+const (
+	rateLimit = 1 << 20 //限速1m/s
+	src       = "/Users/zonst/Downloads/1.zip"
+	dst       = "/Users/zonst/Downloads/2.zip"
+)
+
+var (
+	readFile, writeFile *os.File
+	err                 error
+)
+
+func init() {
+	readFile, err = os.Open(src)
+	if err != nil {
+		panic(err)
+	}
+	writeFile, err = os.OpenFile(dst, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestWriteLimit(t *testing.T) {
+//限制写入速度
+now := time.Now()
+writer := NewStorage(rateLimit).Writer(writeFile)
+if _, err = io.Copy(readFile, writer); err != nil {
+t.Fatal(err)
+}
+fmt.Printf("拷贝耗时:%v, 文件大小:%d", time.Since(now), writer.Size())
+}
+```
+
+3. 限制复制速度
+```go
+const (
+	rateLimit = 1 << 20 //限速1m/s
+	src       = "/Users/zonst/Downloads/1.zip"
+	dst       = "/Users/zonst/Downloads/2.zip"
+)
+
+var (
+	readFile, writeFile *os.File
+	err                 error
+)
+
+func init() {
+	readFile, err = os.Open(src)
+	if err != nil {
+		panic(err)
+	}
+	writeFile, err = os.OpenFile(dst, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestCopyLimit(t *testing.T) {
+//限制复制速度
+now := time.Now()
+if size, err := NewStorage(rateLimit).Copy(readFile, writeFile); err != nil {
+t.Fatal(err)
+} else {
+fmt.Printf("拷贝耗时:%v, 文件大小:%d", time.Since(now), size)
+}
+}
+```
+
+4.限制上传人数大于3时限速
+
+```go
+const (
+	rateLimit = 1 << 20 //限速1m/s
+	src       = "/Users/zonst/Downloads/1.zip"
+	dst       = "/Users/zonst/Downloads/2.zip"
+)
+
+var (
+	readFile, writeFile *os.File
+	err                 error
+)
+
+func init() {
+	readFile, err = os.Open(src)
+	if err != nil {
+		panic(err)
+	}
+	writeFile, err = os.OpenFile(dst, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func TestLimiter(t *testing.T) {
+//限制多少人限速
+judge.Add()
+defer judge.Done()
+now := time.Now()
+if judge.IsNeedLimit() {
+if size, err := NewStorage(rateLimit).Copy(readFile, writeFile); err != nil {
+t.Fatal(err)
+} else {
+fmt.Printf("拷贝耗时:%v, 文件大小:%d", time.Since(now), size)
+}
+}
+}
+```
 
 #### 参与贡献
 
@@ -26,12 +164,3 @@
 3.  提交代码
 4.  新建 Pull Request
 
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
