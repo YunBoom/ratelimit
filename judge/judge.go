@@ -16,20 +16,23 @@ type Jude interface {
 var RateLimitJude = newSeqJude()
 
 type SeqJude struct {
-	seq    int32     //序号 1、2、3放行，之后的需要限速
-	latest time.Time //上一次有人上传的时间
+	seq    int32        //序号 1、2、3放行，之后的需要限速
+	latest atomic.Value //上一次有人上传的时间, 使用atomic.Value保证拷贝原子性
 }
 
 func newSeqJude() *SeqJude {
+	var val atomic.Value
+	val.Store(time.Now())
 	return &SeqJude{
 		seq:    0,
-		latest: time.Now(),
+		latest: val,
 	}
 }
 
 func (sl *SeqJude) IsNeedLimit() bool {
 	//半个小时没人上传则不需要限速
-	if time.Now().After(sl.latest.Add(time.Minute * 30)) {
+	latest := sl.latest.Load().(time.Time)
+	if time.Now().After(latest.Add(time.Minute * 30)) {
 		return false
 	}
 
@@ -47,7 +50,7 @@ func (sl *SeqJude) IsNeedLimit() bool {
 
 func (sl *SeqJude) Add() {
 	sl.increment(1)
-	sl.latest = time.Now() //不需要加锁，可以接受误差
+	sl.latest.Store(time.Now()) //不需要加锁，可以接受误差
 }
 
 func (sl *SeqJude) Done() {

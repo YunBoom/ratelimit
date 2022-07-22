@@ -3,8 +3,7 @@
 #### 介绍
 文件上传下载限速
 
-#### 软件架构
-软件架构说明
+gitee: https://gitee.com/YunBoom/ratelimit
 
 
 #### 安装教程
